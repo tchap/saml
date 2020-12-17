@@ -45,7 +45,7 @@ type Middleware struct {
 	Binding            string // either saml.HTTPPostBinding or saml.HTTPRedirectBinding
 	RequestTracker     RequestTracker
 	Session            SessionProvider
-	RewriteRedirectURL func(*url.URL)
+	RewriteRedirectURL func(*url.URL) *url.URL
 }
 
 // ServeHTTP implements http.Handler and serves the SAML-specific HTTP endpoints
@@ -161,7 +161,7 @@ func (m *Middleware) HandleStartAuthFlow(w http.ResponseWriter, r *http.Request)
 	if binding == saml.HTTPRedirectBinding {
 		redirectURL := authReq.Redirect(relayState)
 		if m.RewriteRedirectURL != nil {
-			m.RewriteRedirectURL(redirectURL)
+			redirectURL = m.RewriteRedirectURL(redirectURL)
 		}
 		w.Header().Add("Location", redirectURL.String())
 		w.WriteHeader(http.StatusFound)

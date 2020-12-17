@@ -24,7 +24,7 @@ type Options struct {
 	SignRequest        bool
 	ForceAuthn         bool // TODO(ross): this should be *bool
 	CookieSameSite     http.SameSite
-	RewriteRedirectURL func(*url.URL)
+	RewriteRedirectURL func(*url.URL) *url.URL
 }
 
 // DefaultSessionCodec returns the default SessionCodec for the provided options,
