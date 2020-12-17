@@ -14,16 +14,17 @@ import (
 
 // Options represents the parameters for creating a new middleware
 type Options struct {
-	EntityID          string
-	URL               url.URL
-	Key               *rsa.PrivateKey
-	Certificate       *x509.Certificate
-	Intermediates     []*x509.Certificate
-	AllowIDPInitiated bool
-	IDPMetadata       *saml.EntityDescriptor
-	SignRequest       bool
-	ForceAuthn        bool // TODO(ross): this should be *bool
-	CookieSameSite    http.SameSite
+	EntityID           string
+	URL                url.URL
+	Key                *rsa.PrivateKey
+	Certificate        *x509.Certificate
+	Intermediates      []*x509.Certificate
+	AllowIDPInitiated  bool
+	IDPMetadata        *saml.EntityDescriptor
+	SignRequest        bool
+	ForceAuthn         bool // TODO(ross): this should be *bool
+	CookieSameSite     http.SameSite
+	RewriteRedirectURL func(*url.URL)
 }
 
 // DefaultSessionCodec returns the default SessionCodec for the provided options,
@@ -115,10 +116,11 @@ func DefaultServiceProvider(opts Options) saml.ServiceProvider {
 // in the returned Middleware.
 func New(opts Options) (*Middleware, error) {
 	m := &Middleware{
-		ServiceProvider: DefaultServiceProvider(opts),
-		Binding:         "",
-		OnError:         DefaultOnError,
-		Session:         DefaultSessionProvider(opts),
+		ServiceProvider:    DefaultServiceProvider(opts),
+		Binding:            "",
+		OnError:            DefaultOnError,
+		Session:            DefaultSessionProvider(opts),
+		RewriteRedirectURL: opts.RewriteRedirectURL,
 	}
 	m.RequestTracker = DefaultRequestTracker(opts, &m.ServiceProvider)
 

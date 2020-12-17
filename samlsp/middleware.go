@@ -3,6 +3,7 @@ package samlsp
 import (
 	"encoding/xml"
 	"net/http"
+	"net/url"
 
 	"github.com/crewjam/saml"
 )
@@ -39,11 +40,12 @@ import (
 // SAML service provider already has a private key, we borrow that key
 // to sign the JWTs as well.
 type Middleware struct {
-	ServiceProvider saml.ServiceProvider
-	OnError         func(w http.ResponseWriter, r *http.Request, err error)
-	Binding         string // either saml.HTTPPostBinding or saml.HTTPRedirectBinding
-	RequestTracker  RequestTracker
-	Session         SessionProvider
+	ServiceProvider    saml.ServiceProvider
+	OnError            func(w http.ResponseWriter, r *http.Request, err error)
+	Binding            string // either saml.HTTPPostBinding or saml.HTTPRedirectBinding
+	RequestTracker     RequestTracker
+	Session            SessionProvider
+	RewriteRedirectURL func(*url.URL)
 }
 
 // ServeHTTP implements http.Handler and serves the SAML-specific HTTP endpoints
@@ -158,6 +160,9 @@ func (m *Middleware) HandleStartAuthFlow(w http.ResponseWriter, r *http.Request)
 
 	if binding == saml.HTTPRedirectBinding {
 		redirectURL := authReq.Redirect(relayState)
+		if m.RewriteRedirectURL != nil {
+			m.RewriteRedirectURL(redirectURL)
+		}
 		w.Header().Add("Location", redirectURL.String())
 		w.WriteHeader(http.StatusFound)
 		return
